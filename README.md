@@ -1,13 +1,36 @@
-# Product Service - Microservicio de Productos
+# Microservicios - Arquitectura Completa
 
 ## Descripción
 
-Este es un microservicio desarrollado en Spring Boot para la gestión de productos. El servicio proporciona una API REST completa para operaciones CRUD de productos.
+Este proyecto implementa una arquitectura completa de microservicios con Spring Cloud, incluyendo un Gateway como punto de entrada único, Service Discovery con Eureka, y un microservicio de productos.
+
+## Arquitectura de Microservicios
+
+### Componentes
+
+1. **Gateway Service** - Puerto 8080
+   - Punto de entrada único para todos los microservicios
+   - Enruta peticiones usando Spring Cloud Gateway
+   - URL: http://localhost:8080
+
+2. **Discovery Server (Eureka)** - Puerto 8761
+   - Servidor de descubrimiento para microservicios
+   - Dashboard: http://localhost:8761
+
+3. **Product Service** - Puerto 8081
+   - Microservicio de gestión de productos
+   - API REST completa
+   - Se registra automáticamente en Eureka
+
+4. **MySQL Database** - Puerto 3307
+   - Base de datos persistente
 
 ## Tecnologías Utilizadas
 
 - **Java 17**
 - **Spring Boot 3.5.4**
+- **Spring Cloud Gateway**
+- **Spring Cloud Netflix Eureka**
 - **Spring Data JPA**
 - **MySQL 8.0**
 - **Docker & Docker Compose**
@@ -17,43 +40,41 @@ Este es un microservicio desarrollado en Spring Boot para la gestión de product
 ## Estructura del Proyecto
 
 ```
-product-service/
-├── src/main/java/com/alejandro/microservices/productservice/
-│   ├── controller/
-│   │   └── ProductController.java
-│   ├── service/
-│   │   └── ProductService.java
-│   ├── model/
-│   │   └── Product.java
-│   ├── repository/
-│   │   └── ProductRepository.java
-│   ├── dto/
-│   │   └── ProductDTO.java
-│   └── config/
-│       └── SwaggerConfig.java
-├── src/main/resources/
-│   └── application.properties
-├── Dockerfile
-├── docker-compose.yml
-└── pom.xml
+microservices/
+├── gateway-service/          # Spring Cloud Gateway
+│   ├── src/main/java/
+│   ├── src/main/resources/
+│   ├── Dockerfile
+│   └── pom.xml
+├── discovery-server/         # Eureka Discovery Server
+│   ├── src/main/java/
+│   ├── src/main/resources/
+│   ├── Dockerfile
+│   └── pom.xml
+└── product-service/          # Product Service
+    ├── src/main/java/
+    ├── src/main/resources/
+    ├── Dockerfile
+    ├── docker-compose.yml
+    └── pom.xml
 ```
 
 ## Endpoints de la API
 
-### Productos
+### A través del Gateway (Puerto 8080)
+
 - `GET /api/products` - Obtener todos los productos
 - `GET /api/products/{id}` - Obtener producto por ID
 - `GET /api/products/name/{name}` - Obtener producto por nombre
 - `POST /api/products` - Crear nuevo producto
 - `PUT /api/products/{id}` - Actualizar producto
 - `DELETE /api/products/{id}` - Eliminar producto
-
-### Consultas Especiales
 - `GET /api/products/in-stock` - Productos con stock disponible
 - `GET /api/products/price-range?minPrice=X&maxPrice=Y` - Productos por rango de precio
 
-### Monitoreo
-- `GET /api/products/health` - Health check del servicio
+### Directo al Product Service (Puerto 8081)
+
+Los mismos endpoints están disponibles directamente en el product-service para desarrollo y debugging.
 
 ## Instalación y Ejecución
 
@@ -62,7 +83,7 @@ product-service/
 - Maven
 - Docker & Docker Compose
 
-### Ejecución Local
+### Ejecución con Docker Compose (Recomendado)
 
 1. **Clonar el repositorio:**
    ```bash
@@ -70,50 +91,88 @@ product-service/
    cd product-service
    ```
 
-2. **Configurar base de datos MySQL:**
-   - Crear base de datos: `product_service_db`
-   - Usuario: `root` / Contraseña: `root`
-
-3. **Ejecutar la aplicación:**
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-
-### Ejecución con Docker
-
-1. **Construir y ejecutar con Docker Compose:**
+2. **Construir y ejecutar todos los servicios:**
    ```bash
    docker-compose up --build
    ```
 
-2. **Acceder a la aplicación:**
-   - API: http://localhost:8081/api/products
-   - Swagger UI: http://localhost:8081/swagger-ui.html
+3. **Acceder a los servicios:**
+   - **Gateway:** http://localhost:8080/api/products
+   - **Eureka Dashboard:** http://localhost:8761
+   - **Product API Directo:** http://localhost:8081/api/products
+   - **Swagger UI:** http://localhost:8081/swagger-ui.html
+
+### Ejecución Local
+
+1. **Ejecutar Discovery Server:**
+   ```bash
+   cd ../discovery-server
+   ./mvnw spring-boot:run
+   ```
+
+2. **Ejecutar Product Service:**
+   ```bash
+   cd ../product-service
+   ./mvnw spring-boot:run
+   ```
+
+3. **Ejecutar Gateway Service:**
+   ```bash
+   cd ../gateway-service
+   ./mvnw spring-boot:run
+   ```
 
 ## Configuración
 
 ### Variables de Entorno
 
-El servicio utiliza las siguientes variables de entorno:
+El gateway utiliza las siguientes variables de entorno:
 
-- `SPRING_DATASOURCE_URL` - URL de conexión a la base de datos
-- `SPRING_DATASOURCE_USERNAME` - Usuario de la base de datos
-- `SPRING_DATASOURCE_PASSWORD` - Contraseña de la base de datos
-- `SPRING_JPA_HIBERNATE_DDL_AUTO` - Configuración de Hibernate
-- `SPRING_JPA_SHOW_SQL` - Mostrar consultas SQL
-- `SPRING_APPLICATION_NAME` - Nombre de la aplicación
+- `EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE` - URL del servidor Eureka
 
-### Base de Datos
+### Rutas del Gateway
 
-El servicio está configurado para trabajar con MySQL 8.0. La tabla `products` se crea automáticamente con los siguientes campos:
+El gateway está configurado para enrutar:
 
-- `id` (Long, Primary Key)
-- `name` (String, Unique)
-- `description` (String)
-- `price` (BigDecimal)
-- `stock` (Integer)
-- `created_at` (LocalDateTime)
-- `updated_at` (LocalDateTime)
+- **`/api/products/**`** → **`product-service`**
+  - Usa Load Balancer (`lb://product-service`)
+  - Descubre automáticamente las instancias en Eureka
+
+## Gateway Service
+
+### Características
+- ✅ **Punto de entrada único** para todos los microservicios
+- ✅ **Enrutamiento dinámico** basado en Service Discovery
+- ✅ **Load Balancing** automático
+- ✅ **Filtros y predicados** configurables
+- ✅ **Integración con Eureka** para descubrimiento de servicios
+
+### Configuración de Rutas
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**
+```
+
+## Discovery Server (Eureka)
+
+### Características
+- ✅ Registro automático de microservicios
+- ✅ Dashboard web para monitoreo
+- ✅ Descubrimiento dinámico de servicios
+- ✅ Health checks automáticos
+
+### Dashboard
+Accede al dashboard de Eureka en http://localhost:8761 para ver:
+- Microservicios registrados
+- Estado de salud de los servicios
+- Información de instancias
 
 ## Documentación de la API
 
@@ -139,6 +198,26 @@ http://localhost:8081/swagger-ui.html
 - ✅ Configuración para microservicios
 - ✅ Containerización con Docker
 - ✅ Base de datos persistente
+- ✅ Service Discovery con Eureka
+- ✅ API Gateway con Spring Cloud Gateway
+- ✅ Arquitectura de microservicios completa
+
+## Pruebas
+
+### Probar el Gateway
+
+```bash
+# Obtener todos los productos a través del gateway
+curl http://localhost:8080/api/products
+
+# Crear un producto a través del gateway
+curl -X POST http://localhost:8080/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test Product","description":"Test Description","price":99.99,"stock":10}'
+
+# Obtener productos en stock
+curl http://localhost:8080/api/products/in-stock
+```
 
 ## Contribución
 
@@ -159,5 +238,6 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 ## Agradecimientos
 
 - Spring Boot Team
+- Spring Cloud Team
 - Docker Community
 - MySQL Team 

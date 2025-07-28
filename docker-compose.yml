@@ -12,30 +12,53 @@ services:
     ports:
       - "3307:3306"
     networks:
-      - product-net
+      - microservices-net
     volumes:
       - mysql-data:/var/lib/mysql
+
+  discovery-server:
+    build: ../discovery-server
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-net
 
   product-service:
     build: .
     container_name: product-service
     depends_on:
       - mysql-db
+      - discovery-server
     ports:
       - "8081:8081"
     networks:
-      - product-net
+      - microservices-net
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/product_service_db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: user123
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
-      SPRING_APPLICATION_NAME: product-service
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka
+    command: ["java", "-jar", "app.jar"]
+
+  gateway-service:
+    build: ../gateway-service
+    container_name: gateway-service
+    depends_on:
+      - discovery-server
+      - product-service
+    ports:
+      - "8080:8080"
+    networks:
+      - microservices-net
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka
     command: ["java", "-jar", "app.jar"]
 
 volumes:
   mysql-data:
 
 networks:
-  product-net: 
+  microservices-net: 
