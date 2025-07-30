@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/products")
@@ -27,16 +26,14 @@ public class ProductController {
     
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id) {
-        Optional<ProductDTO> product = productService.getProductById(id);
-        return product.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        ProductDTO product = productService.getProductById(id);
+        return ResponseEntity.ok(product);
     }
     
     @GetMapping("/name/{name}")
     public ResponseEntity<ProductDTO> getProductByName(@PathVariable String name) {
-        Optional<ProductDTO> product = productService.getProductByName(name);
-        return product.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        ProductDTO product = productService.getProductByName(name);
+        return ResponseEntity.ok(product);
     }
     
     @PostMapping
@@ -51,15 +48,14 @@ public class ProductController {
     
     @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
-        Optional<ProductDTO> updatedProduct = productService.updateProduct(id, productDTO);
-        return updatedProduct.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        ProductDTO updatedProduct = productService.updateProduct(id, productDTO);
+        return ResponseEntity.ok(updatedProduct);
     }
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        boolean deleted = productService.deleteProduct(id);
-        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
     
     @GetMapping("/in-stock")

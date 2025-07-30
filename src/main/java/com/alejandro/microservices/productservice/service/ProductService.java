@@ -1,6 +1,7 @@
 package com.alejandro.microservices.productservice.service;
 
 import com.alejandro.microservices.productservice.dto.ProductDTO;
+import com.alejandro.microservices.productservice.exception.ProductNotFoundException;
 import com.alejandro.microservices.productservice.model.Product;
 import com.alejandro.microservices.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,14 +24,16 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
     
-    public Optional<ProductDTO> getProductById(Long id) {
-        return productRepository.findById(id)
-                .map(this::convertToDTO);
+    public ProductDTO getProductById(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Producto con ID " + id + " no fue encontrado."));
+        return convertToDTO(product);
     }
     
-    public Optional<ProductDTO> getProductByName(String name) {
-        return productRepository.findByName(name)
-                .map(this::convertToDTO);
+    public ProductDTO getProductByName(String name) {
+        Product product = productRepository.findByName(name)
+                .orElseThrow(() -> new ProductNotFoundException("Producto con nombre '" + name + "' no fue encontrado."));
+        return convertToDTO(product);
     }
     
     public ProductDTO createProduct(ProductDTO productDTO) {
@@ -44,23 +46,22 @@ public class ProductService {
         return convertToDTO(savedProduct);
     }
     
-    public Optional<ProductDTO> updateProduct(Long id, ProductDTO productDTO) {
-        return productRepository.findById(id)
-                .map(existingProduct -> {
-                    existingProduct.setName(productDTO.getName());
-                    existingProduct.setDescription(productDTO.getDescription());
-                    existingProduct.setPrice(productDTO.getPrice());
-                    existingProduct.setStock(productDTO.getStock());
-                    return convertToDTO(productRepository.save(existingProduct));
-                });
+    public ProductDTO updateProduct(Long id, ProductDTO productDTO) {
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Producto con ID " + id + " no fue encontrado."));
+        
+        existingProduct.setName(productDTO.getName());
+        existingProduct.setDescription(productDTO.getDescription());
+        existingProduct.setPrice(productDTO.getPrice());
+        existingProduct.setStock(productDTO.getStock());
+        return convertToDTO(productRepository.save(existingProduct));
     }
     
-    public boolean deleteProduct(Long id) {
-        if (productRepository.existsById(id)) {
-            productRepository.deleteById(id);
-            return true;
+    public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ProductNotFoundException("Producto con ID " + id + " no fue encontrado.");
         }
-        return false;
+        productRepository.deleteById(id);
     }
     
     public List<ProductDTO> getProductsInStock() {
