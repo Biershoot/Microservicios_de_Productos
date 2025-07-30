@@ -15,13 +15,13 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * 🔐 JWT Utility Class - Core Security Component
+ * 🔐 Clase de Utilidades JWT - Componente Core de Seguridad
  * 
- * This class handles all JWT (JSON Web Token) operations including:
- * - Token generation with user claims and roles
- * - Token validation and expiration checking
- * - Claims extraction for authorization
- * - Secure key management using HMAC-SHA256
+ * Esta clase maneja todas las operaciones JWT (JSON Web Token) incluyendo:
+ * - Generación de tokens con claims de usuario y roles
+ * - Validación de tokens y verificación de expiración
+ * - Extracción de claims para autorización
+ * - Gestión segura de claves usando HMAC-SHA256
  * 
  * @author Alejandro Arango Calderón
  * @version 1.0
@@ -30,7 +30,7 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // 🔑 JWT Configuration - Externalized for security and flexibility
+    // 🔑 Configuración JWT - Externalizada para seguridad y flexibilidad
     @Value("${jwt.secret}")
     private String secret;
 
@@ -38,10 +38,10 @@ public class JwtUtil {
     private Long expiration;
 
     /**
-     * 🛡️ Creates signing key for JWT operations
-     * Uses HMAC-SHA256 algorithm for secure token signing
+     * 🛡️ Crea la clave de firma para operaciones JWT
+     * Usa algoritmo HMAC-SHA256 para firma segura de tokens
      * 
-     * @return Key object for JWT signing
+     * @return Objeto Key para firma JWT
      */
     private Key getSigningKey() {
         byte[] keyBytes = secret.getBytes();
@@ -49,34 +49,34 @@ public class JwtUtil {
     }
 
     /**
-     * 👤 Extracts username from JWT token
-     * Used for user identification in distributed microservices
+     * 👤 Extrae el nombre de usuario del token JWT
+     * Usado para identificación de usuario en microservicios distribuidos
      * 
-     * @param token JWT token string
-     * @return Username from token subject
+     * @param token String del token JWT
+     * @return Nombre de usuario del subject del token
      */
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
     /**
-     * ⏰ Extracts expiration date from JWT token
-     * Critical for token validation and security
+     * ⏰ Extrae la fecha de expiración del token JWT
+     * Crítico para validación de tokens y seguridad
      * 
-     * @param token JWT token string
-     * @return Expiration date
+     * @param token String del token JWT
+     * @return Fecha de expiración
      */
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
     /**
-     * 🔍 Generic method to extract any claim from JWT
-     * Uses functional programming for flexibility
+     * 🔍 Método genérico para extraer cualquier claim del JWT
+     * Usa programación funcional para flexibilidad
      * 
-     * @param token JWT token string
-     * @param claimsResolver Function to extract specific claim
-     * @return Extracted claim value
+     * @param token String del token JWT
+     * @param claimsResolver Función para extraer claim específico
+     * @return Valor del claim extraído
      */
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
@@ -84,11 +84,11 @@ public class JwtUtil {
     }
 
     /**
-     * 🔓 Parses and validates JWT token
-     * Throws exceptions for invalid tokens (handled by global exception handler)
+     * 🔓 Parsea y valida el token JWT
+     * Lanza excepciones para tokens inválidos (manejadas por el global exception handler)
      * 
-     * @param token JWT token string
-     * @return Claims object with all token data
+     * @param token String del token JWT
+     * @return Objeto Claims con todos los datos del token
      */
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
@@ -99,22 +99,22 @@ public class JwtUtil {
     }
 
     /**
-     * ⚠️ Checks if token has expired
-     * Critical security check for token validation
+     * ⚠️ Verifica si el token ha expirado
+     * Verificación crítica de seguridad para validación de tokens
      * 
-     * @param token JWT token string
-     * @return true if expired, false otherwise
+     * @param token String del token JWT
+     * @return true si expiró, false en caso contrario
      */
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
     /**
-     * 🎫 Generates JWT token for authenticated user
-     * Creates token with user details and configurable expiration
+     * 🎫 Genera token JWT para usuario autenticado
+     * Crea token con detalles del usuario y expiración configurable
      * 
-     * @param userDetails Spring Security UserDetails object
-     * @return Generated JWT token string
+     * @param userDetails Objeto UserDetails de Spring Security
+     * @return String del token JWT generado
      */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
@@ -122,12 +122,12 @@ public class JwtUtil {
     }
 
     /**
-     * 🏗️ Creates JWT token with claims and subject
-     * Implements JWT standard with proper headers and payload
+     * 🏗️ Crea token JWT con claims y subject
+     * Implementa estándar JWT con headers y payload apropiados
      * 
-     * @param claims Additional claims (roles, permissions, etc.)
-     * @param subject Username or user identifier
-     * @return Complete JWT token
+     * @param claims Claims adicionales (roles, permisos, etc.)
+     * @param subject Nombre de usuario o identificador de usuario
+     * @return Token JWT completo
      */
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
@@ -140,15 +140,15 @@ public class JwtUtil {
     }
 
     /**
-     * ✅ Validates JWT token against user details
-     * Performs comprehensive validation including:
-     * - Token expiration check
-     * - Username matching
-     * - Token integrity verification
+     * ✅ Valida token JWT contra detalles del usuario
+     * Realiza validación comprehensiva incluyendo:
+     * - Verificación de expiración del token
+     * - Coincidencia de nombre de usuario
+     * - Verificación de integridad del token
      * 
-     * @param token JWT token to validate
-     * @param userDetails User details to validate against
-     * @return true if valid, false otherwise
+     * @param token Token JWT a validar
+     * @param userDetails Detalles del usuario para validar contra
+     * @return true si es válido, false en caso contrario
      */
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);

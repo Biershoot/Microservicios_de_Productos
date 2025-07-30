@@ -13,24 +13,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 🛡️ Global Exception Handler - Centralized Error Management
+ * 🛡️ Manejador Global de Excepciones - Gestión Centralizada de Errores
  * 
- * This class provides centralized exception handling for the entire application.
- * It ensures consistent error responses across all endpoints and proper HTTP
- * status codes for different types of errors.
+ * Esta clase proporciona manejo centralizado de excepciones para toda la aplicación.
+ * Asegura respuestas de error consistentes en todos los endpoints y códigos HTTP
+ * apropiados para diferentes tipos de errores.
  * 
- * Key features:
- * - Consistent JSON error response format
- * - Proper HTTP status codes for each exception type
- * - Timestamp for error tracking and debugging
- * - Security-conscious error messages (no sensitive data exposure)
- * - Comprehensive exception coverage
+ * Características principales:
+ * - Formato JSON consistente de respuesta de error
+ * - Códigos HTTP apropiados para cada tipo de excepción
+ * - Timestamp para seguimiento y debugging de errores
+ * - Mensajes de error conscientes de seguridad (sin exposición de datos sensibles)
+ * - Cobertura comprehensiva de excepciones
  * 
- * Benefits:
- * - Improved API consistency
- * - Better error handling for clients
- * - Enhanced security (no stack traces in production)
- * - Easier debugging and monitoring
+ * Beneficios:
+ * - Mejor consistencia de API
+ * - Mejor manejo de errores para clientes
+ * - Seguridad mejorada (sin stack traces en producción)
+ * - Debugging y monitoreo más fácil
  * 
  * @author Alejandro Arango Calderón
  * @version 1.0
@@ -40,13 +40,13 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     /**
-     * 👤 Handle user registration conflicts
+     * 👤 Manejar conflictos de registro de usuario
      * 
-     * Occurs when trying to register a user with an existing username.
-     * Returns HTTP 409 Conflict with structured error response.
+     * Ocurre cuando se intenta registrar un usuario con un username existente.
+     * Retorna HTTP 409 Conflict con respuesta de error estructurada.
      * 
      * @param ex UserAlreadyExistsException
-     * @return ResponseEntity with conflict error details
+     * @return ResponseEntity con detalles del error de conflicto
      */
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<?> handleUserAlreadyExists(UserAlreadyExistsException ex) {
@@ -60,13 +60,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 🔐 Handle authentication failures
+     * 🔐 Manejar fallos de autenticación
      * 
-     * Occurs when login credentials are invalid (wrong username/password).
-     * Returns HTTP 401 Unauthorized with generic error message for security.
+     * Ocurre cuando las credenciales de login son inválidas (username/password incorrectos).
+     * Retorna HTTP 401 Unauthorized con mensaje de error genérico por seguridad.
      * 
      * @param ex BadCredentialsException
-     * @return ResponseEntity with unauthorized error details
+     * @return ResponseEntity con detalles del error de no autorizado
      */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<?> handleBadCredentials(BadCredentialsException ex) {
@@ -74,19 +74,19 @@ public class GlobalExceptionHandler {
         error.put("timestamp", LocalDateTime.now());
         error.put("status", HttpStatus.UNAUTHORIZED.value());
         error.put("error", "Invalid credentials");
-        error.put("message", "Invalid username or password"); // 🔒 Generic message for security
+        error.put("message", "Invalid username or password"); // 🔒 Mensaje genérico por seguridad
 
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED); // ✅ 401 Unauthorized
     }
 
     /**
-     * 👤 Handle user not found errors
+     * 👤 Manejar errores de usuario no encontrado
      * 
-     * Occurs when trying to access a user that doesn't exist in the system.
-     * Returns HTTP 404 Not Found with user-friendly message.
+     * Ocurre cuando se intenta acceder a un usuario que no existe en el sistema.
+     * Retorna HTTP 404 Not Found con mensaje amigable para el usuario.
      * 
      * @param ex UsernameNotFoundException
-     * @return ResponseEntity with not found error details
+     * @return ResponseEntity con detalles del error de no encontrado
      */
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<?> handleUsernameNotFound(UsernameNotFoundException ex) {
@@ -100,13 +100,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 📝 Handle validation errors
+     * 📝 Manejar errores de validación
      * 
-     * Occurs when request data fails validation (missing required fields, invalid format, etc.).
-     * Returns HTTP 400 Bad Request with validation error details.
+     * Ocurre cuando los datos de la solicitud fallan en validación (campos requeridos faltantes, formato inválido, etc.).
+     * Retorna HTTP 400 Bad Request con detalles del error de validación.
      * 
      * @param ex MethodArgumentNotValidException
-     * @return ResponseEntity with validation error details
+     * @return ResponseEntity con detalles del error de validación
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
@@ -120,14 +120,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 🚨 Handle general/unexpected errors
+     * 🚨 Manejar errores generales/inesperados
      * 
-     * Catch-all handler for any unhandled exceptions. Provides graceful
-     * error handling and prevents sensitive information leakage.
-     * Returns HTTP 500 Internal Server Error.
+     * Manejador catch-all para cualquier excepción no manejada. Proporciona manejo
+     * elegante de errores y previene fuga de información sensible.
+     * Retorna HTTP 500 Internal Server Error.
      * 
-     * @param ex Generic Exception
-     * @return ResponseEntity with internal server error details
+     * @param ex Excepción genérica
+     * @return ResponseEntity con detalles del error interno del servidor
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGeneralError(Exception ex) {

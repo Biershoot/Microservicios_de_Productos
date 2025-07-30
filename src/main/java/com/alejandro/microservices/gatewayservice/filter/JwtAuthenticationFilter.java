@@ -17,24 +17,25 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 🌐 JWT Authentication Filter - API Gateway Security
+ * 🌐 Filtro de Autenticación JWT - Seguridad del API Gateway
  * 
- * This global filter intercepts all requests to the API Gateway and validates
- * JWT tokens before routing to microservices. It's a critical security component
- * that implements centralized authentication for the entire microservices architecture.
+ * Este filtro global intercepta todas las solicitudes al API Gateway y valida
+ * tokens JWT antes de enrutar a los microservicios. Es un componente crítico
+ * de seguridad que implementa autenticación centralizada para toda la arquitectura
+ * de microservicios.
  * 
- * Key responsibilities:
- * - Intercept all incoming HTTP requests
- * - Validate JWT tokens for protected endpoints
- * - Allow public endpoints without authentication
- * - Add user information to headers for microservices
- * - Handle authentication errors gracefully
+ * Responsabilidades principales:
+ * - Interceptar todas las solicitudes HTTP entrantes
+ * - Validar tokens JWT para endpoints protegidos
+ * - Permitir endpoints públicos sin autenticación
+ * - Agregar información del usuario a headers para microservicios
+ * - Manejar errores de autenticación de forma elegante
  * 
- * Architecture benefits:
- * - Centralized security enforcement
- * - Reduced authentication overhead in microservices
- * - Consistent security policy across all services
- * - Simplified token validation logic
+ * Beneficios de la arquitectura:
+ * - Aplicación de seguridad centralizada
+ * - Reducción de overhead de autenticación en microservicios
+ * - Política de seguridad consistente en todos los servicios
+ * - Lógica de validación de tokens simplificada
  * 
  * @author Alejandro Arango Calderón
  * @version 1.0
@@ -45,79 +46,79 @@ import java.util.List;
 @Slf4j
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
-    // 🔧 JWT utility for token validation
+    // 🔧 Utilidad JWT para validación de tokens
     private final JwtUtil jwtUtil;
 
-    // 🌍 Public paths that don't require authentication
-    // These endpoints are accessible without JWT tokens
+    // 🌍 Rutas públicas que no requieren autenticación
+    // Estos endpoints son accesibles sin tokens JWT
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
-            "/api/auth/register",    // User registration
-            "/api/auth/login",       // User authentication
-            "/api/auth/health",      // Auth service health check
-            "/actuator/health",      // Gateway health check
-            "/actuator/info"         // Gateway information
+            "/api/auth/register",    // Registro de usuario
+            "/api/auth/login",       // Autenticación de usuario
+            "/api/auth/health",      // Health check del servicio de auth
+            "/actuator/health",      // Health check del gateway
+            "/actuator/info"         // Información del gateway
     );
 
     /**
-     * 🚦 Core filter method - Intercepts every request to the gateway
+     * 🚦 Método core del filtro - Intercepta cada solicitud al gateway
      * 
-     * This method implements the gateway security flow:
-     * 1. Check if path is public (no authentication required)
-     * 2. Extract JWT token from Authorization header
-     * 3. Validate token integrity and expiration
-     * 4. Add user information to request headers
-     * 5. Route request to appropriate microservice
+     * Este método implementa el flujo de seguridad del gateway:
+     * 1. Verificar si la ruta es pública (no requiere autenticación)
+     * 2. Extraer token JWT del header Authorization
+     * 3. Validar integridad y expiración del token
+     * 4. Agregar información del usuario a headers de la solicitud
+     * 5. Enrutar solicitud al microservicio apropiado
      * 
-     * @param exchange ServerWebExchange containing request/response
-     * @param chain Gateway filter chain for processing
-     * @return Mono<Void> for reactive processing
+     * @param exchange ServerWebExchange conteniendo request/response
+     * @param chain Cadena de filtros del gateway para procesamiento
+     * @return Mono<Void> para procesamiento reactivo
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getPath().value();
 
-        // ⚡ Step 1: Allow public paths without authentication
+        // ⚡ Paso 1: Permitir rutas públicas sin autenticación
         if (isPublicPath(path)) {
             log.debug("Public path accessed: {}", path);
             return chain.filter(exchange);
         }
 
-        // 🔍 Step 2: Extract Authorization header
+        // 🔍 Paso 2: Extraer header Authorization
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         
-        // ❌ Step 3: Validate Authorization header format
+        // ❌ Paso 3: Validar formato del header Authorization
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.warn("Missing or invalid Authorization header for path: {}", path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
-        // 🎫 Step 4: Extract JWT token (remove "Bearer " prefix)
+        // 🎫 Paso 4: Extraer token JWT (remover prefijo "Bearer ")
         String token = authHeader.substring(7);
 
         try {
-            // ✅ Step 5: Validate JWT token
+            // ✅ Paso 5: Validar token JWT
             if (jwtUtil.validateToken(token)) {
                 String username = jwtUtil.extractUsername(token);
                 log.info("Valid token for user: {} accessing path: {}", username, path);
                 
-                // 👤 Step 6: Add user information to request headers
-                // This allows microservices to access user context without re-validating tokens
+                // 👤 Paso 6: Agregar información del usuario a headers de la solicitud
+                // Esto permite a los microservicios acceder al contexto del usuario sin re-validar tokens
                 ServerHttpRequest modifiedRequest = request.mutate()
-                        .header("X-User-Name", username) // Custom header for user identification
+                        .header("X-User-Name", username) // Header personalizado para identificación de usuario
                         .build();
                 
-                // ➡️ Step 7: Continue processing with modified request
+                // ➡️ Paso 7: Continuar procesamiento con solicitud modificada
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } else {
-                // ❌ Invalid token - return 401 Unauthorized
+                // ❌ Token inválido - retornar 401 Unauthorized
                 log.warn("Invalid token for path: {}", path);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
         } catch (Exception e) {
-            // 🚨 Token validation error - return 401 Unauthorized
+            // 🚨 Error de validación de token - retornar 401 Unauthorized
             log.error("Error validating token: {}", e.getMessage());
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
@@ -125,25 +126,25 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * 🔍 Check if the given path is public (no authentication required)
+     * 🔍 Verificar si la ruta dada es pública (no requiere autenticación)
      * 
-     * @param path Request path to check
-     * @return true if path is public, false otherwise
+     * @param path Ruta de la solicitud a verificar
+     * @return true si la ruta es pública, false en caso contrario
      */
     private boolean isPublicPath(String path) {
         return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
     }
 
     /**
-     * 📋 Filter execution order
+     * 📋 Orden de ejecución del filtro
      * 
-     * Lower numbers execute first. This filter should run early in the chain
-     * to ensure authentication happens before routing.
+     * Números más bajos se ejecutan primero. Este filtro debe ejecutarse temprano
+     * en la cadena para asegurar que la autenticación ocurra antes del enrutamiento.
      * 
-     * @return Order value (-100 for early execution)
+     * @return Valor de orden (-100 para ejecución temprana)
      */
     @Override
     public int getOrder() {
-        return -100; // 🚀 Execute before other filters
+        return -100; // 🚀 Ejecutar antes que otros filtros
     }
 } 

@@ -10,22 +10,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 🌐 Authentication Controller - REST API Endpoints
+ * 🌐 Controlador de Autenticación - Endpoints REST API
  * 
- * This controller exposes REST endpoints for authentication operations.
- * It's the entry point for all authentication-related HTTP requests
- * in our microservices architecture.
+ * Este controlador expone endpoints REST para operaciones de autenticación.
+ * Es el punto de entrada para todas las solicitudes HTTP relacionadas con
+ * autenticación en nuestra arquitectura de microservicios.
  * 
- * Key endpoints:
- * - POST /api/auth/register - User registration
- * - POST /api/auth/login - User authentication
- * - GET /api/auth/health - Service health check
+ * Endpoints principales:
+ * - POST /api/auth/register - Registro de usuario
+ * - POST /api/auth/login - Autenticación de usuario
+ * - GET /api/auth/health - Health check del servicio
  * 
- * Features:
- * - CORS enabled for cross-origin requests
- * - Proper HTTP status codes
- * - JSON request/response handling
- * - Health check for monitoring
+ * Características:
+ * - CORS habilitado para solicitudes cross-origin
+ * - Códigos HTTP apropiados
+ * - Manejo de JSON request/response
+ * - Health check para monitoreo
  * 
  * @author Alejandro Arango Calderón
  * @version 1.0
@@ -34,32 +34,32 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // 🌍 Enable CORS for frontend integration
+@CrossOrigin(origins = "*") // 🌍 Habilitar CORS para integración frontend
 public class AuthController {
     
-    // 🔧 Service dependency injected via constructor
+    // 🔧 Dependencia del servicio inyectada vía constructor
     private final AuthService authService;
     
     /**
-     * 📝 User Registration Endpoint
+     * 📝 Endpoint de Registro de Usuario
      * 
-     * Creates a new user account and returns a JWT token for immediate authentication.
-     * This endpoint is publicly accessible (no authentication required).
+     * Crea una nueva cuenta de usuario y retorna un token JWT para autenticación inmediata.
+     * Este endpoint es públicamente accesible (no requiere autenticación).
      * 
-     * Request body:
+     * Cuerpo de la solicitud:
      * {
      *   "username": "john_doe",
      *   "password": "securePassword123",
      *   "roles": ["USER", "ADMIN"]
      * }
      * 
-     * Response:
+     * Respuesta:
      * {
      *   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
      * }
      * 
-     * @param request Registration data (username, password, roles)
-     * @return ResponseEntity with JWT token and HTTP 201 status
+     * @param request Datos de registro (username, password, roles)
+     * @return ResponseEntity con token JWT y estado HTTP 201
      */
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
@@ -68,24 +68,24 @@ public class AuthController {
     }
     
     /**
-     * 🔑 User Login Endpoint
+     * 🔑 Endpoint de Login de Usuario
      * 
-     * Authenticates user credentials and returns a JWT token for session management.
-     * This endpoint is publicly accessible (no authentication required).
+     * Autentica credenciales de usuario y retorna un token JWT para gestión de sesión.
+     * Este endpoint es públicamente accesible (no requiere autenticación).
      * 
-     * Request body:
+     * Cuerpo de la solicitud:
      * {
      *   "username": "john_doe",
      *   "password": "securePassword123"
      * }
      * 
-     * Response:
+     * Respuesta:
      * {
      *   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
      * }
      * 
-     * @param request Login credentials (username, password)
-     * @return ResponseEntity with JWT token and HTTP 200 status
+     * @param request Credenciales de login (username, password)
+     * @return ResponseEntity con token JWT y estado HTTP 200
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
@@ -94,12 +94,12 @@ public class AuthController {
     }
     
     /**
-     * 💚 Health Check Endpoint
+     * 💚 Endpoint de Health Check
      * 
-     * Simple health check for monitoring and load balancer integration.
-     * Used by API Gateway and monitoring tools to verify service availability.
+     * Health check simple para monitoreo e integración con load balancer.
+     * Usado por API Gateway y herramientas de monitoreo para verificar disponibilidad del servicio.
      * 
-     * @return ResponseEntity with service status and HTTP 200 status
+     * @return ResponseEntity con estado del servicio y estado HTTP 200
      */
     @GetMapping("/health")
     public ResponseEntity<String> health() {

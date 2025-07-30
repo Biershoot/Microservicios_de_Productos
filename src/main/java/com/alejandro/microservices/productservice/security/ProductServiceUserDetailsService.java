@@ -14,8 +14,6 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class ProductServiceUserDetailsService implements UserDetailsService {
     
-    private final JwtUtil jwtUtil;
-    
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // Para el product-service, creamos un UserDetails básico
