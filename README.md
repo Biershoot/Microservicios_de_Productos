@@ -1,243 +1,203 @@
-# Microservicios - Arquitectura Completa
+# Gateway Service
 
-## Descripción
+API Gateway para el sistema de microservicios con autenticación JWT.
 
-Este proyecto implementa una arquitectura completa de microservicios con Spring Cloud, incluyendo un Gateway como punto de entrada único, Service Discovery con Eureka, y un microservicio de productos.
+## 🚀 Características
 
-## Arquitectura de Microservicios
+- **Enrutamiento inteligente** a microservicios
+- **Autenticación JWT** centralizada
+- **Service Discovery** con Eureka
+- **Filtros de seguridad** globales
+- **Logging** detallado de requests
 
-### Componentes
+## 📋 Prerrequisitos
 
-1. **Gateway Service** - Puerto 8080
-   - Punto de entrada único para todos los microservicios
-   - Enruta peticiones usando Spring Cloud Gateway
-   - URL: http://localhost:8080
+- Java 17+
+- Maven 3.6+
+- Eureka Server (puerto 8761)
+- Auth Service (puerto 8081)
+- Product Service (puerto 8082)
+- Order Service (puerto 8083)
 
-2. **Discovery Server (Eureka)** - Puerto 8761
-   - Servidor de descubrimiento para microservicios
-   - Dashboard: http://localhost:8761
+## ⚙️ Configuración
 
-3. **Product Service** - Puerto 8081
-   - Microservicio de gestión de productos
-   - API REST completa
-   - Se registra automáticamente en Eureka
-
-4. **MySQL Database** - Puerto 3307
-   - Base de datos persistente
-
-## Tecnologías Utilizadas
-
-- **Java 17**
-- **Spring Boot 3.5.4**
-- **Spring Cloud Gateway**
-- **Spring Cloud Netflix Eureka**
-- **Spring Data JPA**
-- **MySQL 8.0**
-- **Docker & Docker Compose**
-- **Swagger/OpenAPI 3**
-- **Lombok**
-
-## Estructura del Proyecto
-
-```
-microservices/
-├── gateway-service/          # Spring Cloud Gateway
-│   ├── src/main/java/
-│   ├── src/main/resources/
-│   ├── Dockerfile
-│   └── pom.xml
-├── discovery-server/         # Eureka Discovery Server
-│   ├── src/main/java/
-│   ├── src/main/resources/
-│   ├── Dockerfile
-│   └── pom.xml
-└── product-service/          # Product Service
-    ├── src/main/java/
-    ├── src/main/resources/
-    ├── Dockerfile
-    ├── docker-compose.yml
-    └── pom.xml
-```
-
-## Endpoints de la API
-
-### A través del Gateway (Puerto 8080)
-
-- `GET /api/products` - Obtener todos los productos
-- `GET /api/products/{id}` - Obtener producto por ID
-- `GET /api/products/name/{name}` - Obtener producto por nombre
-- `POST /api/products` - Crear nuevo producto
-- `PUT /api/products/{id}` - Actualizar producto
-- `DELETE /api/products/{id}` - Eliminar producto
-- `GET /api/products/in-stock` - Productos con stock disponible
-- `GET /api/products/price-range?minPrice=X&maxPrice=Y` - Productos por rango de precio
-
-### Directo al Product Service (Puerto 8081)
-
-Los mismos endpoints están disponibles directamente en el product-service para desarrollo y debugging.
-
-## Instalación y Ejecución
-
-### Prerrequisitos
-- Java 17
-- Maven
-- Docker & Docker Compose
-
-### Ejecución con Docker Compose (Recomendado)
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/Biershoot/Microservicios_de_Productos.git
-   cd product-service
-   ```
-
-2. **Construir y ejecutar todos los servicios:**
-   ```bash
-   docker-compose up --build
-   ```
-
-3. **Acceder a los servicios:**
-   - **Gateway:** http://localhost:8080/api/products
-   - **Eureka Dashboard:** http://localhost:8761
-   - **Product API Directo:** http://localhost:8081/api/products
-   - **Swagger UI:** http://localhost:8081/swagger-ui.html
-
-### Ejecución Local
-
-1. **Ejecutar Discovery Server:**
-   ```bash
-   cd ../discovery-server
-   ./mvnw spring-boot:run
-   ```
-
-2. **Ejecutar Product Service:**
-   ```bash
-   cd ../product-service
-   ./mvnw spring-boot:run
-   ```
-
-3. **Ejecutar Gateway Service:**
-   ```bash
-   cd ../gateway-service
-   ./mvnw spring-boot:run
-   ```
-
-## Configuración
-
-### Variables de Entorno
-
-El gateway utiliza las siguientes variables de entorno:
-
-- `EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE` - URL del servidor Eureka
-
-### Rutas del Gateway
-
-El gateway está configurado para enrutar:
-
-- **`/api/products/**`** → **`product-service`**
-  - Usa Load Balancer (`lb://product-service`)
-  - Descubre automáticamente las instancias en Eureka
-
-## Gateway Service
-
-### Características
-- ✅ **Punto de entrada único** para todos los microservicios
-- ✅ **Enrutamiento dinámico** basado en Service Discovery
-- ✅ **Load Balancing** automático
-- ✅ **Filtros y predicados** configurables
-- ✅ **Integración con Eureka** para descubrimiento de servicios
-
-### Configuración de Rutas
-
+### application.yml
 ```yaml
+server:
+  port: 8080
+
 spring:
+  application:
+    name: gateway-service
   cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: true
       routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
         - id: product-service
           uri: lb://product-service
           predicates:
             - Path=/api/products/**
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
 ```
 
-## Discovery Server (Eureka)
+## 🔐 Seguridad
 
-### Características
-- ✅ Registro automático de microservicios
-- ✅ Dashboard web para monitoreo
-- ✅ Descubrimiento dinámico de servicios
-- ✅ Health checks automáticos
+### Rutas Públicas (sin autenticación)
+- `/api/auth/register` - Registro de usuarios
+- `/api/auth/login` - Login de usuarios
+- `/api/auth/health` - Health check del auth service
+- `/actuator/health` - Health check del gateway
+- `/actuator/info` - Información del gateway
 
-### Dashboard
-Accede al dashboard de Eureka en http://localhost:8761 para ver:
-- Microservicios registrados
-- Estado de salud de los servicios
-- Información de instancias
+### Rutas Protegidas (requieren JWT)
+- `/api/products/**` - Todos los endpoints de productos
+- `/api/orders/**` - Todos los endpoints de órdenes
+- `/api/gateway/**` - Endpoints del gateway
 
-## Documentación de la API
+## 🛠️ Instalación y Ejecución
 
-La documentación de la API está disponible a través de Swagger UI en:
-http://localhost:8081/swagger-ui.html
-
-## Desarrollo
-
-### Estructura de Clases
-
-- **Product**: Entidad JPA que representa un producto
-- **ProductDTO**: Objeto de transferencia de datos
-- **ProductRepository**: Interfaz de acceso a datos
-- **ProductService**: Lógica de negocio
-- **ProductController**: Controlador REST
-
-### Características
-
-- ✅ Operaciones CRUD completas
-- ✅ Validación de datos
-- ✅ Manejo de errores
-- ✅ Documentación con Swagger
-- ✅ Configuración para microservicios
-- ✅ Containerización con Docker
-- ✅ Base de datos persistente
-- ✅ Service Discovery con Eureka
-- ✅ API Gateway con Spring Cloud Gateway
-- ✅ Arquitectura de microservicios completa
-
-## Pruebas
-
-### Probar el Gateway
-
+### 1. Clonar el repositorio
 ```bash
-# Obtener todos los productos a través del gateway
-curl http://localhost:8080/api/products
-
-# Crear un producto a través del gateway
-curl -X POST http://localhost:8080/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test Product","description":"Test Description","price":99.99,"stock":10}'
-
-# Obtener productos en stock
-curl http://localhost:8080/api/products/in-stock
+git clone <repository-url>
+cd gateway-service
 ```
 
-## Contribución
+### 2. Compilar el proyecto
+```bash
+mvn clean install
+```
+
+### 3. Ejecutar la aplicación
+```bash
+mvn spring-boot:run
+```
+
+### 4. Verificar que esté funcionando
+```bash
+curl http://localhost:8080/api/gateway/health
+```
+
+## 📡 Endpoints
+
+### Gateway Health
+- `GET /api/gateway/health` - Estado del gateway
+- `GET /api/gateway/info` - Información del gateway
+
+### Enrutamiento a Microservicios
+- `GET /api/auth/**` → Auth Service (puerto 8081)
+- `GET /api/products/**` → Product Service (puerto 8082)
+- `GET /api/orders/**` → Order Service (puerto 8083)
+
+## 🔄 Flujo de Autenticación
+
+1. **Usuario se registra/login** en `/api/auth/register` o `/api/auth/login`
+2. **Recibe token JWT** del auth-service
+3. **Usa el token** en header `Authorization: Bearer <token>`
+4. **Gateway valida** el token antes de enrutar
+5. **Microservicio recibe** la request con el token validado
+
+## 📝 Ejemplo de Uso
+
+### 1. Registrar usuario
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "password123",
+    "roles": ["USER"]
+  }'
+```
+
+### 2. Login y obtener token
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "password123"
+  }'
+```
+
+### 3. Usar token para acceder a productos
+```bash
+curl -X GET http://localhost:8080/api/products \
+  -H "Authorization: Bearer <token-from-login>"
+```
+
+## 🐳 Docker
+
+### Construir imagen
+```bash
+docker build -t gateway-service .
+```
+
+### Ejecutar contenedor
+```bash
+docker run -p 8080:8080 gateway-service
+```
+
+## 📊 Monitoreo
+
+- **Health Check**: `http://localhost:8080/actuator/health`
+- **Info**: `http://localhost:8080/actuator/info`
+- **Logs**: Configurados en `application.yml`
+
+## 🔧 Configuración Avanzada
+
+### Variables de Entorno
+```bash
+export JWT_SECRET=mySecretKey123456789012345678901234567890123456789012345678901234567890
+export JWT_EXPIRATION=86400000
+```
+
+### Configuración de Eureka
+```yaml
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+```
+
+## 🚨 Troubleshooting
+
+### Error: "Service not found"
+- Verificar que Eureka Server esté ejecutándose
+- Verificar que los microservicios estén registrados
+
+### Error: "Unauthorized"
+- Verificar que el token JWT sea válido
+- Verificar que el token no haya expirado
+- Verificar el formato: `Authorization: Bearer <token>`
+
+### Error: "Connection refused"
+- Verificar que todos los servicios estén ejecutándose
+- Verificar los puertos configurados
+
+## 📚 Dependencias Principales
+
+- **Spring Cloud Gateway**: Enrutamiento y filtros
+- **Spring Cloud Netflix Eureka Client**: Service discovery
+- **JWT (jjwt)**: Validación de tokens
+- **Lombok**: Reducción de boilerplate code
+
+## 🤝 Contribución
 
 1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
 3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
 4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+5. Abrir un Pull Request
 
-## Licencia
+## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## Autor
-
-**Alejandro** - [GitHub](https://github.com/Biershoot)
-
-## Agradecimientos
-
-- Spring Boot Team
-- Spring Cloud Team
-- Docker Community
-- MySQL Team 
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles. 

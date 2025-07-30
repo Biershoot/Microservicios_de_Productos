@@ -76,4 +76,9 @@ public class ProductController {
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Product Service is running!");
     }
+    
+    @GetMapping("/public/health")
+    public ResponseEntity<String> publicHealth() {
+        return ResponseEntity.ok("Product Service Public Health Check!");
+    }
 } 

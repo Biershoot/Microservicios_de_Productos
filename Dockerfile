@@ -1,11 +1,9 @@
-# Imagen base
-FROM eclipse-temurin:17-jdk-alpine
+FROM openjdk:17-jdk-slim
 
-# Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiar el JAR generado al contenedor
-COPY target/product-service-0.0.1-SNAPSHOT.jar app.jar
+COPY target/auth-service-0.0.1-SNAPSHOT.jar app.jar
 
-# Comando para ejecutar la aplicación
+EXPOSE 8081
+
 ENTRYPOINT ["java", "-jar", "app.jar"] 
